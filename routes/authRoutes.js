@@ -95,11 +95,11 @@ router.post('/register', async (req, res, next) => {
         let user = await User.findOne({ email: email });
         let verificationQueue = await Verification.findOne({ email: email });
         if (user) {
-           return responseFunction(res, 400, 'User already exists', null, false);
+            return responseFunction(res, 400, 'User already exists', null, false);
         }
 
         if (!verificationQueue) {
-           
+
             return responseFunction(res, 400, 'Please send otp first', null, false);
         }
 
@@ -199,7 +199,41 @@ router.get('/getuser', authTokenHandler, async (req, res, next) => {
     }
 })
 
+router.post('/changepassword', async (req, res, next) => {
+    try {
+        const { email, otp, password } = req.body;
 
+        let user = await User.findOne({ email: email });
+        let verificationQueue = await Verification.findOne({ email: email });
+        if (!user) {
+            return responseFunction(res, 400, "User doesn't  exist", null, false);
+        }
+
+        if (!verificationQueue) {
+
+            return responseFunction(res, 400, 'Please send otp first', null, false);
+        }
+
+
+        const isMatch = await bcrypt.compare(otp, verificationQueue.code);
+
+        if (!isMatch) {
+            return responseFunction(res, 400, 'Invalid OTP', null, false);
+        }
+
+        user.password = password;
+        await user.save();
+        await Verification.deleteOne({ email: email });
+
+
+        return responseFunction(res, 200, 'Password changed successfully', null, true);
+
+
+    }
+    catch (err) {
+        next(err);
+    }
+})
 
 const getObjectURL = async (key) => {
     const params = {
@@ -223,7 +257,7 @@ const postObjectURL = async (filename, contentType) => {
 
 
 
-router.get('/generatepostobjecturl',  async (req, res, next) => {
+router.get('/generatepostobjecturl', async (req, res, next) => {
     try {
         const timeinms = new Date().getTime();
         const signedUrl = await postObjectURL(timeinms.toString(), '');
