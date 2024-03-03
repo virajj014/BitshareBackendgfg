@@ -25,30 +25,34 @@ const s3Client = new S3Client({
 
 
 
-async function mailer(recieveremail, code) {
+const mailer = async (recieveremail, code) => {
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
-        port: 587,
+        post: 587,
         secure: false,
         requireTLS: true,
         auth: {
-            user: "virajj014@gmail.com",
-            pass: "kakw vytc cmkr awhq"
+            user: process.env.COMPANY_EMAIL,
+            pass: process.env.GMAIL_APP_PASSWORD
         }
     })
 
+
     let info = await transporter.sendMail({
-        from: "Team BitS",
+        from: "Team BitShare",
         to: recieveremail,
-        subject: "OTP for verification",
+        subject: "OTP for BitShare",
         text: "Your OTP is " + code,
         html: "<b>Your OTP is " + code + "</b>",
 
     })
 
     console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 
+    if (info.messageId) {
+        return true;
+    }
+    return false;
 }
 
 
